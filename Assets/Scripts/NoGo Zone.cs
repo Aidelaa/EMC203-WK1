@@ -13,17 +13,18 @@ public class NoGoZone : MonoBehaviour
 
     private void Start()
     {
-        zoneRenderer = GetComponent<Renderer>();
-        if (zoneRenderer != null)
+        if (!TryGetComponent(out zoneRenderer))
         {
-            originalColor = zoneRenderer.material.color;
+            Debug.LogWarning("Renderer not found on NoGoZone!", this);
+            return;
         }
+        originalColor = zoneRenderer.material.color;
     }
 
     private void Update()
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player == null) return;
+        if (player?.transform == null) return;
 
         float distanceX = transform.position.x - player.transform.position.x;
         float distanceY = transform.position.y - player.transform.position.y;
@@ -31,17 +32,11 @@ public class NoGoZone : MonoBehaviour
 
         if (distance <= triggerDistance)
         {
-            // Trigger no-go zone effects
             StartCoroutine(ShakeZone());
 
-            // Restart the scene
-            if (distance <= restartDistance)
+            if (distance <= restartDistance && player.TryGetComponent(out Player playerBehavior))
             {
-                Player playerBehavior = player.GetComponent<Player>();
-                if (playerBehavior != null)
-                {
-                    playerBehavior.RestartScene();
-                }
+                playerBehavior.RestartScene();
             }
         }
     }
@@ -50,13 +45,11 @@ public class NoGoZone : MonoBehaviour
     {
         Vector3 originalPosition = transform.position;
 
-        // Warning color
-        if (zoneRenderer != null)
+        if (zoneRenderer)
         {
             zoneRenderer.material.color = warningColor;
         }
 
-        // Shaking
         for (int i = 0; i < 10; i++)
         {
             transform.position = originalPosition + new Vector3(
@@ -69,8 +62,7 @@ public class NoGoZone : MonoBehaviour
 
         transform.position = originalPosition;
 
-        // Reset color
-        if (zoneRenderer != null)
+        if (zoneRenderer)
         {
             zoneRenderer.material.color = originalColor;
         }
